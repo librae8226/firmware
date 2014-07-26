@@ -8,6 +8,21 @@ MAKEOVERRIDES=
 # by convention, all symbols referring to a directory end with a slash - this allows
 # directories to resolve to "" when equal to the working directory
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+#define V
+ifndef V
+	SILENT_CC       = @echo '  [CC]       ' $(@:$(BUILD_PATH)/%.o=%.c);
+	SILENT_AS       = @echo '  [AS]       ' $(@:$(BUILD_PATH)/%.o=%.S);
+	SILENT_CXX      = @echo '  [CXX]      ' $(@:$(BUILD_PATH)/%.o=%.cpp);
+	SILENT_LD       = @echo '  [LD]       ' $(@F);
+	SILENT_AR       = @echo '  [AR]       ' $(@F);
+	SILENT_OBJCOPY  = @echo '  [OBJCOPY]  ' $(@F);
+	SILENT_DISAS    = @echo '  [DISAS]    ' $(@:$(BUILD_PATH)/%.bin=%).lss;
+	SILENT_OBJDUMP  = @echo '  [OBJDUMP]  ' $(OBJDUMP);
+endif
+#endef
+
+# URL to invoke cloud flashing
+CLOUD_FLASH_URL = https://api.spark.io/v1/devices/$(SPARK_CORE_ID)\?access_token=$(SPARK_ACCESS_TOKEN)
 
 # for now, assume current dir is build/
 PROJECT_DIR=../
@@ -191,7 +206,7 @@ size: $(TARGETDIR)$(TARGET).elf
 # Create a hex file from ELF file
 %.hex : %.elf
 	@echo Invoking: ARM GNU Create Flash Image
-	$(OBJCOPY) -O ihex $< $@
+	$(SILENT_OBJCOPY) $(OBJCOPY) -O ihex $< $@
 	@echo
 
 # Create a bin file from ELF file
@@ -209,7 +224,7 @@ $(TARGETDIR)$(TARGET).elf : check_external_deps $(ALLOBJ)
 	@echo Building target: $@
 	@echo Invoking: ARM GCC C++ Linker
 	$(MKDIR) $(dir $@)
-	$(CPP) $(CFLAGS) $(ALLOBJ) --output $@ $(LDFLAGS)
+	$(SILENT_CXX) $(CPP) $(CFLAGS) $(ALLOBJ) --output $@ $(LDFLAGS)
 	@echo
 
 # Check for external dependancies are up to date
@@ -232,7 +247,7 @@ $(BUILD_PATH)%.o : $(SRC_PATH)%.c
 	@echo Building file: $<
 	@echo Invoking: ARM GCC C Compiler
 	$(MKDIR) $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(SILENT_CC) $(CC) $(CFLAGS) -c -o $@ $<
 	@echo
 
 # Assember to build .o from .S in $(BUILD_DIR)
@@ -240,7 +255,7 @@ $(BUILD_PATH)%.o : $(SRC_PATH)%.S
 	@echo Building file: $<
 	@echo Invoking: ARM GCC Assember
 	$(MKDIR) $(dir $@)
-	$(CC) $(ASFLAGS) -c -o $@ $<
+	$(SILENT_CC) $(CC) $(ASFLAGS) -c -o $@ $<
 	@echo
 
 # CPP compiler to build .o from .cpp in $(BUILD_DIR)
@@ -249,7 +264,7 @@ $(BUILD_PATH)%.o : $(SRC_PATH)%.cpp
 	@echo Building file: $<
 	@echo Invoking: ARM GCC CPP Compiler
 	$(MKDIR) $(dir $@)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(SILENT_CC) $(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 	@echo
 
 # Other Targets

@@ -31,6 +31,7 @@ int tinkerDigitalRead(String pin);
 int tinkerDigitalWrite(String command);
 int tinkerAnalogRead(String pin);
 int tinkerAnalogWrite(String command);
+int accrtHello(String command);
 
 SYSTEM_MODE(AUTOMATIC);
 
@@ -38,6 +39,7 @@ SYSTEM_MODE(AUTOMATIC);
 void setup()
 {
 	//Setup the Tinker application here
+	RGB.brightness(12);
 
 	//Register all the Tinker functions
 	Spark.function("digitalread", tinkerDigitalRead);
@@ -46,12 +48,23 @@ void setup()
 	Spark.function("analogread", tinkerAnalogRead);
 	Spark.function("analogwrite", tinkerAnalogWrite);
 
+	//Register all the accrete functions
+	Spark.function("hello", accrtHello);
+
+	pinMode(D0, INPUT_PULLDOWN);
+	pinMode(D7, OUTPUT);
 }
 
 /* This function loops forever --------------------------------------------*/
 void loop()
 {
-	//This will run in a loop
+//	digitalWrite(D7, digitalRead(D0));
+//	while (digitalRead(D0) == HIGH) {
+//		digitalWrite(D7, HIGH);          // sets the LED on
+//		delay(200);                       // waits for 200mS
+//		digitalWrite(D7, LOW);           // sets the LED off
+//		delay(200);                       // waits for 200mS
+//	}
 }
 
 /*******************************************************************************
@@ -173,4 +186,27 @@ int tinkerAnalogWrite(String command)
 		return 1;
 	}
 	else return -2;
+}
+
+/*******************************************************************************
+ * Function Name  : accrtHello
+ * Description    : Just say hello
+ * Input          : Random things
+ * Output         : None.
+ * Return         : 1 on success and a negative number on failure
+ *******************************************************************************/
+int accrtHello(String command)
+{
+	if(command.startsWith("D"))
+	{
+		pinMode(D7, OUTPUT);
+		digitalWrite(D7, LOW);
+		return 1;
+	}
+	else
+	{
+		pinMode(D7, OUTPUT);
+		digitalWrite(D7, HIGH);
+		return 2;
+	}
 }
