@@ -47,7 +47,7 @@
 #define USER_VAR_MAX_COUNT				10
 #define USER_VAR_KEY_LENGTH				12
 
-#define USER_FUNC_MAX_COUNT				5
+#define USER_FUNC_MAX_COUNT				6
 #define USER_FUNC_KEY_LENGTH			12
 #define USER_FUNC_ARG_LENGTH			64
 

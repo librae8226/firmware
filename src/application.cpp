@@ -23,7 +23,7 @@
  ******************************************************************************
  */
 
-/* Includes ------------------------------------------------------------------*/  
+/* Includes ------------------------------------------------------------------*/
 #include "application.h"
 
 /* Function prototypes -------------------------------------------------------*/
@@ -31,7 +31,8 @@ int tinkerDigitalRead(String pin);
 int tinkerDigitalWrite(String command);
 int tinkerAnalogRead(String pin);
 int tinkerAnalogWrite(String command);
-int accrtHello(String command);
+int tinkerLed(String command);
+int tinkerEcho(String command);
 
 SYSTEM_MODE(AUTOMATIC);
 
@@ -49,9 +50,11 @@ void setup()
 	Spark.function("analogwrite", tinkerAnalogWrite);
 
 	//Register all the accrete functions
-	Spark.function("hello", accrtHello);
+	Spark.function("led", tinkerLed);
+	Spark.function("echo", tinkerEcho);
 
-	pinMode(D0, INPUT_PULLDOWN);
+	pinMode(D0, INPUT_PULLUP);
+	pinMode(D1, INPUT_PULLUP);
 	pinMode(D7, OUTPUT);
 }
 
@@ -70,7 +73,7 @@ void loop()
 /*******************************************************************************
  * Function Name  : tinkerDigitalRead
  * Description    : Reads the digital value of a given pin
- * Input          : Pin 
+ * Input          : Pin
  * Output         : None.
  * Return         : Value of the pin (0 or 1) in INT type
                     Returns a negative number on failure
@@ -132,7 +135,7 @@ int tinkerDigitalWrite(String command)
 /*******************************************************************************
  * Function Name  : tinkerAnalogRead
  * Description    : Reads the analog value of a pin
- * Input          : Pin 
+ * Input          : Pin
  * Output         : None.
  * Return         : Returns the analog value in INT type (0 to 4095)
                     Returns a negative number on failure
@@ -189,24 +192,36 @@ int tinkerAnalogWrite(String command)
 }
 
 /*******************************************************************************
- * Function Name  : accrtHello
+ * Function Name  : tinkerLed
  * Description    : Just say hello
  * Input          : Random things
  * Output         : None.
- * Return         : 1 on success and a negative number on failure
+ * Return         : 1 for on and 0 for off
  *******************************************************************************/
-int accrtHello(String command)
+int tinkerLed(String command)
 {
-	if(command.startsWith("D"))
+	if (command == "on" || command == "ON")
 	{
 		pinMode(D7, OUTPUT);
-		digitalWrite(D7, LOW);
+		digitalWrite(D7, HIGH);
 		return 1;
 	}
 	else
 	{
 		pinMode(D7, OUTPUT);
-		digitalWrite(D7, HIGH);
-		return 2;
+		digitalWrite(D7, LOW);
+		return 0;
 	}
+}
+
+/*******************************************************************************
+ * Function Name  : tinkerEcho
+ * Description    : Echo what it receives
+ * Input          : Random things
+ * Output         : None
+ * Return         : The character ascii code it received
+ *******************************************************************************/
+int tinkerEcho(String command)
+{
+	return command.charAt(0);
 }
