@@ -26,6 +26,21 @@
 /* Includes ------------------------------------------------------------------*/
 #include "application.h"
 
+/* Definitions ---------------------------------------------------------------*/
+SYSTEM_MODE(AUTOMATIC);
+
+enum {
+	STATE_BOOTING = 0,
+	STATE_LISTENING = 1,
+	STATE_BREWING = 2,
+};
+
+/* Variables -----------------------------------------------------------------*/
+static double temperature = 0.0;
+static double alcohol1 = 0.0;
+static double alcohol2 = 0.0;
+static int state = STATE_BOOTING;
+
 /* Function prototypes -------------------------------------------------------*/
 int tinkerDigitalRead(String pin);
 int tinkerDigitalWrite(String command);
@@ -34,13 +49,12 @@ int tinkerAnalogWrite(String command);
 int tinkerLed(String command);
 int tinkerEcho(String command);
 
-SYSTEM_MODE(AUTOMATIC);
-
-double temperature = 0.0;
-
 /* This function is called once at start up ----------------------------------*/
 void setup()
 {
+	//Setup the communication bus
+	Serial.begin(9600);
+
 	//Setup the Tinker application here
 	RGB.brightness(12);
 
@@ -58,6 +72,12 @@ void setup()
 	Spark.variable("temperature", &temperature, DOUBLE);
 	pinMode(A7, INPUT);
 
+	Spark.variable("alcohol1", &alcohol1, DOUBLE);
+	pinMode(A3, INPUT);
+
+	Spark.variable("alcohol2", &alcohol2, DOUBLE);
+	pinMode(A2, INPUT);
+
 	pinMode(D0, INPUT_PULLUP);
 	pinMode(D1, INPUT_PULLUP);
 	pinMode(D7, OUTPUT);
@@ -67,8 +87,31 @@ void setup()
 void loop()
 {
 	int reading = 0;
-	reading = analogRead(A7);
-	temperature = reading;
+
+	switch (state) {
+	case STATE_BOOTING:
+		Serial.println("Spark USB Serial is running...");
+		state = STATE_LISTENING;
+		break;
+	case STATE_LISTENING:
+		/* sleep here awaiting for remote api calls */
+		reading = analogRead(A3);
+		alcohol1 = reading;
+		reading = analogRead(A2);
+		alcohol2 = reading;
+		reading = analogRead(A7);
+		temperature = reading;
+		break;
+	case STATE_BREWING:
+		/* do brewing job here */
+
+		state = STATE_LISTENING;
+		break;
+	default:
+		Serial.print("no such state: ");
+		Serial.println(state);
+		break;
+	}
 }
 
 /*******************************************************************************
@@ -224,5 +267,7 @@ int tinkerLed(String command)
  *******************************************************************************/
 int tinkerEcho(String command)
 {
+	Serial.print("input: ");
+	Serial.println(command);
 	return command.charAt(0);
 }
