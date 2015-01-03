@@ -40,14 +40,15 @@ static double temperature = 0.0;
 static double alcohol1 = 0.0;
 static double alcohol2 = 0.0;
 static int state = STATE_BOOTING;
+static int pumpsOn[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 /* Function prototypes -------------------------------------------------------*/
 int tinkerDigitalRead(String pin);
 int tinkerDigitalWrite(String command);
 int tinkerAnalogRead(String pin);
 int tinkerAnalogWrite(String command);
-int tinkerLed(String command);
-int tinkerEcho(String command);
+int drinkbotSetPumps(String command);
+int drinkbotEcho(String command);
 
 /* This function is called once at start up ----------------------------------*/
 void setup()
@@ -65,21 +66,37 @@ void setup()
 	Spark.function("analogread", tinkerAnalogRead);
 	Spark.function("analogwrite", tinkerAnalogWrite);
 
-	//Register all the accrete functions
-	Spark.function("led", tinkerLed);
-	Spark.function("echo", tinkerEcho);
+	//Register all the Drinkbot functions
+	Spark.function("setpumps", drinkbotSetPumps);
+	Spark.function("echo", drinkbotEcho);
 
+	//Register all the Drinkbot variables
 	Spark.variable("temperature", &temperature, DOUBLE);
 	pinMode(A7, INPUT);
-
 	Spark.variable("alcohol1", &alcohol1, DOUBLE);
 	pinMode(A3, INPUT);
-
 	Spark.variable("alcohol2", &alcohol2, DOUBLE);
 	pinMode(A2, INPUT);
 
-	pinMode(D0, INPUT_PULLUP);
-	pinMode(D1, INPUT_PULLUP);
+	//Pumps
+	pinMode(D0, OUTPUT);
+	digitalWrite(D0, LOW);
+	pinMode(D1, OUTPUT);
+	digitalWrite(D1, LOW);
+	pinMode(A0, OUTPUT);
+	digitalWrite(A0, LOW);
+	pinMode(A1, OUTPUT);
+	digitalWrite(A1, LOW);
+	pinMode(A4, OUTPUT);
+	digitalWrite(A4, LOW);
+	pinMode(A5, OUTPUT);
+	digitalWrite(A5, LOW);
+	pinMode(A6, OUTPUT);
+	digitalWrite(A6, LOW);
+	pinMode(A7, OUTPUT);
+	digitalWrite(A7, LOW);
+
+	//RGB LED
 	pinMode(D7, OUTPUT);
 }
 
@@ -236,14 +253,32 @@ int tinkerAnalogWrite(String command)
 }
 
 /*******************************************************************************
- * Function Name  : tinkerLed
- * Description    : Just say hello
- * Input          : Random things
+ * Function Name  : drinkbotSetPumps
+ * Description    : Setup and start the pumping jobs,
+ *                  e.g. P0:xx;P1:xx;P2:xx;P3:xx;P4:xx;P5:xx;P6:xx;P7:xx
+ *                  where P0 ~ P7 are the 8 pumps and xx is the cl value.
+ * Input          : pumps id and corresponding cl value string
  * Output         : None.
- * Return         : 1 for on and 0 for off
+ * Return         : 0 for success, others for error numbers
  *******************************************************************************/
-int tinkerLed(String command)
+int drinkbotSetPumps(String command)
 {
+	int i;
+
+	Serial.print(__func__);
+	Serial.print(", args: ");
+	Serial.println();
+
+	/* parse command */
+	Serial.print("pumpsOn: ");
+	for (i = 0; i < 8; i++) {
+		pumpsOn[i] = command.substring(6*i+3, 6*i+5).toInt();
+		Serial.print(pumpsOn[i]);
+		Serial.print(' ');
+	}
+	Serial.println("");
+
+	/* excute pumping jobs */
 	if (command == "on" || command == "ON")
 	{
 		pinMode(D7, OUTPUT);
@@ -259,13 +294,13 @@ int tinkerLed(String command)
 }
 
 /*******************************************************************************
- * Function Name  : tinkerEcho
+ * Function Name  : drinkbotEcho
  * Description    : Echo what it receives
  * Input          : Random things
  * Output         : None
  * Return         : The character ascii code it received
  *******************************************************************************/
-int tinkerEcho(String command)
+int drinkbotEcho(String command)
 {
 	Serial.print("input: ");
 	Serial.println(command);
