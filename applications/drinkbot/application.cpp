@@ -168,6 +168,13 @@ void loop()
 		Serial.println(state);
 		break;
 	}
+
+	/*
+	 * FIXME This delay ensures the whole system won't be blocked.
+	 * Especially like virtual COM device, these guys will hang without
+	 * delay. But we need to provide a proper value so that there won't
+	 * be too much loss of the whole system efficiency.
+	 */
 	delay(100);
 }
 
