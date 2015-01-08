@@ -49,6 +49,7 @@
 #include "application.h"
 #include "OneWire.h"
 #include "spark-dallas-temperature.h"
+#include <math.h>
 
 /* Definitions ---------------------------------------------------------------*/
 SYSTEM_MODE(AUTOMATIC);
@@ -65,11 +66,14 @@ enum {
 #define vol2time(vol)	((unsigned long)vol*1000)	// vol -> millis, to be fixed according to actual case
 
 #define IO_TEMP		D4
+#define IO_ALCOH1	A3
+#define IO_ALCOH2	A2
+#define ALCOHOL_THRES	680	// reading value larger than this indicates alcohol sensor not ready
 
 /* Variables -----------------------------------------------------------------*/
 static double temperature = 0.0;
-static double alcohol1 = 0.0;
-static double alcohol2 = 0.0;
+static double bac1 = 0.0;
+static double bac2 = 0.0;
 static int state = STATE_BOOTING;
 static int pumpsOnVol[NPUMPS] = {0, 0, 0, 0, 0, 0, 0, 0};	// unit: cl
 static int pumpsStatus[NPUMPS] = {0, 0, 0, 0, 0, 0, 0, 0};	// 1: on, 0: off
@@ -86,6 +90,7 @@ int drinkbotDebug(String command);
 
 static void changestate(int s);
 static int parseparams(String command, int id);
+static double calculateBAC(int mq3_pin);
 static int collectdata(void);
 static void controlpump(int id, boolean on);
 static void startpumpjobs(int p[NPUMPS]);
@@ -117,9 +122,9 @@ void setup()
 	tsensor.begin();
 	tsensor.setResolution(12);
 
-	Spark.variable("alcohol1", &alcohol1, DOUBLE);
+	Spark.variable("bac1", &bac1, DOUBLE);
 	pinMode(A3, INPUT);
-	Spark.variable("alcohol2", &alcohol2, DOUBLE);
+	Spark.variable("bac2", &bac2, DOUBLE);
 	pinMode(A2, INPUT);
 
 	//Pumps
@@ -140,8 +145,8 @@ void loop()
 		Serial.println("Booting...");
 
 		temperature = 0.0;
-		alcohol1 = 0.0;
-		alcohol2 = 0.0;
+		bac1 = 0.0;
+		bac2 = 0.0;
 		state = STATE_BOOTING;
 		memset(pumpsOnVol, 0, sizeof(pumpsOnVol));
 		memset(pumpsStatus, 0, sizeof(pumpsStatus));
@@ -246,11 +251,11 @@ int drinkbotDebug(String command)
 	Serial.print("temperature: ");
 	Serial.println(temperature);
 
-	Serial.print("alcohol1: ");
-	Serial.println(alcohol1);
+	Serial.print("bac1: ");
+	Serial.println(bac1);
 
-	Serial.print("alcohol2: ");
-	Serial.println(alcohol2);
+	Serial.print("bac2: ");
+	Serial.println(bac2);
 
 	Serial.print("state: ");
 	Serial.println(state);
@@ -295,15 +300,25 @@ static int parseparams(String command, int id)
 	return command.substring(6*id+3, 6*id+5).toInt();
 }
 
-// TODO need to poll sensors and calculate data
+static double calculateBAC(int mq3_pin)
+{
+	int mq3_raw = 0, mq3_raw_max = 0;
+	int i;
+	mq3_raw = analogRead(mq3_pin);
+	if (mq3_raw < ALCOHOL_THRES) {
+		for(i = 0; i < 100; i++) {
+			mq3_raw = analogRead(mq3_pin);
+			mq3_raw_max = (mq3_raw > mq3_raw_max) ? mq3_raw : mq3_raw_max;
+		}
+	}
+	return pow(((-3.757)*pow(10, -7))*mq3_raw_max, 2) + 0.0008613*mq3_raw_max - 0.3919;
+}
+
 static int collectdata(void)
 {
-	int reading = 0;
 
-	reading = analogRead(A3);
-	alcohol1 = reading;
-	reading = analogRead(A2);
-	alcohol2 = reading;
+	bac1 = calculateBAC(IO_ALCOH1);
+	bac2 = calculateBAC(IO_ALCOH2);
 
 	tsensor.requestTemperatures();
 	temperature = tsensor.getTempCByIndex(0);
