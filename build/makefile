@@ -99,21 +99,19 @@ TARGET ?= core-firmware
 TARGETDIR ?= 
 
 
+# Paths to dependent projects, referenced from root of this project
+LIB_CORE_COMMON_PATH = ../core-common-lib/
+LIB_CORE_COMMUNICATION_PATH = ../core-communication-lib/
+LIB_CORE_LIBRARIES_PATH = libraries/
+
 # Find all build.mk makefiles in each source directory in the src tree.
 SRC_MAKEFILES := $(call rwildcard,$(SRC_PATH),build.mk)
 
 # Include all build.mk defines source files.
 include $(SRC_MAKEFILES)
 
-# Paths to dependent projects, referenced from root of this project
-LIB_CORE_COMMON_PATH = ../core-common-lib/
-LIB_CORE_COMMUNICATION_PATH = ../core-communication-lib/
-LIB_CORE_LIBRARIES_PATH = libraries/
-
 # Include directories for optional "libraries" (eg. Serial2.h)
-INCLUDE_DIRS += $(LIB_CORE_LIBRARIES_PATH)OneWire
 INCLUDE_DIRS += $(LIB_CORE_LIBRARIES_PATH)Serial2
-INCLUDE_DIRS += $(LIB_CORE_LIBRARIES_PATH)spark-dallas-temperature
 
 # Additional include directories, applied to objects built for this target.
 # todo - delegate this to a include.mk file in each repo so include dirs are better
