@@ -64,6 +64,8 @@ enum {
 #define NPUMPS		8
 #define vol2time(vol)	((unsigned long)vol*1000)	// vol -> millis, to be fixed according to actual case
 
+#define IO_TEMP		D4
+
 /* Variables -----------------------------------------------------------------*/
 static double temperature = 0.0;
 static double alcohol1 = 0.0;
@@ -74,6 +76,9 @@ static int pumpsStatus[NPUMPS] = {0, 0, 0, 0, 0, 0, 0, 0};	// 1: on, 0: off
 static unsigned long timeStart = 0;
 
 static const int pump2io[NPUMPS] = {D0, D1, A0, A1, A4, A5, A6, A7};
+
+OneWire oneWire(IO_TEMP);
+DallasTemperature tsensor(&oneWire);
 
 /* Function prototypes -------------------------------------------------------*/
 int drinkbotSetPumps(String command);
@@ -94,6 +99,7 @@ void setup()
 
 	//Setup the logging functions
 	Serial.begin(9600);
+	Serial.println("setup...");
 
 	//Setup communication bus with secondary processor
 //	Serial1.begin(9600);
@@ -107,7 +113,10 @@ void setup()
 
 	//Register all the Drinkbot variables
 	Spark.variable("temperature", &temperature, DOUBLE);
-	pinMode(D7, INPUT);
+	Serial.println("setup Dallas Temperature IC Control...");
+	tsensor.begin();
+	tsensor.setResolution(12);
+
 	Spark.variable("alcohol1", &alcohol1, DOUBLE);
 	pinMode(A3, INPUT);
 	Spark.variable("alcohol2", &alcohol2, DOUBLE);
@@ -159,6 +168,7 @@ void loop()
 		Serial.println(state);
 		break;
 	}
+	delay(100);
 }
 
 /*******************************************************************************
@@ -287,8 +297,9 @@ static int collectdata(void)
 	alcohol1 = reading;
 	reading = analogRead(A2);
 	alcohol2 = reading;
-	reading = analogRead(D7);
-	temperature = reading;
+
+	tsensor.requestTemperatures();
+	temperature = tsensor.getTempCByIndex(0);
 
 	return 0;
 }
