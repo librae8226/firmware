@@ -62,6 +62,17 @@ enum {
 	STATE_MAX,
 };
 
+#define SYSLOG(fmt) \
+	do { \
+		time_t now = Time.now(); \
+		char _buf[16]; \
+		sprintf(_buf, "%02d-%02d %02d:%02d:%2d", Time.month(now), Time.day(now), Time.hour(now), Time.minute(now), Time.second(now)); \
+		Serial.print('['); \
+		Serial.print(_buf); \
+		Serial.print("] "); \
+		Serial.println(fmt); \
+	} while (0);
+
 #define NPUMPS		8
 #define vol2time(mpv, vol)	((unsigned long)mpv * vol)	// (millis needed per cl) * volume
 
@@ -252,6 +263,7 @@ int drinkbotDebug(String command)
 	}
 
 
+	SYSLOG("show timestamp");
 	Serial.println("dump all variables:");
 
 	Serial.print("temperature: ");
